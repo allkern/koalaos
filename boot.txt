@@ -1,0 +1,12 @@
+koalaOS boot process:
+
+1. system is reset, execution starts at bfc00000 (KSEG1), 64 KiB ROM containing firmware is mapped to this area
+2. firmware initializes minimal set of hardware (UART, NVS)
+3. firmware searches a bootable partition on all 4 NVS slots
+4. firmware finds a bootable partition, mounts it and searches a file matching the name 'kernel'
+5. firmware finds kernel file, reads it from disk, copies it to main memory at virtual 80000080 (physical 00000080)
+6. firmware resets SR BEV bit (change exception vector area to KSEG0)
+7. firmware triggers syscall with $a0 set to 80000000 (SYS_LOAD_OS), $a1 set to (nvs_slot | partition << 2)
+8. execution is transferred to kernel, kernel mounts filesystem and loads executable named 'system' to main memory
+9. kernel sets up MMU, TLB and 
+10. kernel is resident on main memory, execution is transferred to system's entry point
