@@ -9,6 +9,14 @@ A simple, text-based, single-tasking operating system written in C
     <img width="88%" src="https://github.com/allkern/koalaos/assets/15825466/fb1f2cb0-221b-497a-9dae-76a502d6c7ac">
 </p>
 
+# Features
+- Read-only access to ext2 filesystems
+- GPU-accelerated terminal renderer with limited support for ANSI escape sequences
+- Minimal implementation of standard Unix utilities (`cat`, `ls`, etc.)
+- Lightweight, minimal implementation of the C standard library
+- A built-in CHIP-8 emulator!
+- RTC support
+
 # Building
 You have to get your hands on a MIPS R3000-compatible GCC toolchain, I used `mipsel-linux-gnu-` and this is what the Makefile is currently configured to use.
 
@@ -31,3 +39,6 @@ The `src/config.h` file contains a couple configuration switches:
 There's no real reason to use this OS other than fun or torture, but if you decide to do so anyways, here's some useful information!
 
 (WIP)
+
+# Acknowledgements
+KoalaOS' standard C library implementation contains code from GCC, MUSL and Apple Open Source
