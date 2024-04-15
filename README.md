@@ -25,10 +25,10 @@ Once you have an R3000 toolchain, building should be very easy, execute the foll
 make
 make kernel
 ```
-Additionally, running `make fs` (needs root access) will copy the compiled binaries to the `root` folder (not `/`), and will generate a disk image for use on an [emulator](https://github.com/allkern/koalaboard).
+Additionally, running `make fs` (needs root access) will copy the compiled binaries to the `root` folder (not `/`), and will generate a disk image for use in an [emulator](https://github.com/allkern/koalaboard).
 
 ## Configuration
-The `src/config.h` file contains a couple configuration switches:
+`src/config.h` contains a couple configuration switches:
 - `GPU_FONT16/GPU_FONT8` allow selecting the height of the font for the GPU-based renderer
 - `TERM_GPU/TERM_UART` allow selecting whether to use the GPU-based terminal or write all output to the emulated UART chip
 
