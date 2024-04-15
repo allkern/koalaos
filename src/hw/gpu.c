@@ -1,6 +1,8 @@
 #include "gpu.h"
 
 #include "util/mmio.h"
+#include "libc/ctype.h"
+#include "libc/stdlib.h"
 
 int __ffssi2(int a) {
     if (a == 0)
@@ -59,7 +61,100 @@ void gpu_set_pos(uint32_t pos) {
     xy = pos;
 }
 
+static int ansi = 0;
+static char ansi_n[4];
+static char ansi_m[4];
+static char* ansi_n_p = ansi_n;
+static char* ansi_m_p = ansi_m;
+static int state = 0;
+
+void gpu_parse_ansi(char c) {
+    if (c == 'm') {
+        int n = atoi(ansi_n);
+
+        uint8_t bg = attr & 0xf0;
+        int at = -1;
+
+        switch (n) {
+            case 0: gpu_restore_attribute(); break;
+            case 30: at = bg | 0; break;
+            case 31: at = bg | 1; break;
+            case 32: at = bg | 2; break;
+            case 33: at = bg | 3; break;
+            case 34: at = bg | 4; break;
+            case 35: at = bg | 5; break;
+            case 36: at = bg | 6; break;
+            case 37: at = bg | 7; break;
+            case 90: at = bg | 8; break;
+            case 91: at = bg | 9; break;
+            case 92: at = bg | 10; break;
+            case 93: at = bg | 11; break;
+            case 94: at = bg | 12; break;
+            case 95: at = bg | 13; break;
+            case 96: at = bg | 14; break;
+            case 97: at = bg | 15; break;
+        }
+
+        if (*ansi_m) {
+            int m = atoi(ansi_m);
+
+            switch (n) {
+                case 40: at = (at & 0xf) | 0x00; break;
+                case 41: at = (at & 0xf) | 0x10; break;
+                case 42: at = (at & 0xf) | 0x20; break;
+                case 43: at = (at & 0xf) | 0x30; break;
+                case 44: at = (at & 0xf) | 0x40; break;
+                case 45: at = (at & 0xf) | 0x50; break;
+                case 46: at = (at & 0xf) | 0x60; break;
+                case 47: at = (at & 0xf) | 0x70; break;
+                case 100: at = (at & 0xf) | 0x80; break;
+                case 101: at = (at & 0xf) | 0x90; break;
+                case 102: at = (at & 0xf) | 0xa0; break;
+                case 103: at = (at & 0xf) | 0xb0; break;
+                case 104: at = (at & 0xf) | 0xc0; break;
+                case 105: at = (at & 0xf) | 0xd0; break;
+                case 106: at = (at & 0xf) | 0xe0; break;
+                case 107: at = (at & 0xf) | 0xf0; break;
+            }
+        }
+
+        if (at != -1)
+            gpu_set_attribute(at);
+
+        state = 0;
+        ansi = 0;
+        ansi_n_p = ansi_n;
+        ansi_m_p = ansi_m;
+    }
+
+    switch (state) {
+        case 0:
+            state = (c == '[') ? 1 : 0;
+        break;
+        case 1:
+            if (c == ';') {
+                state = 2;
+
+                return;
+            }
+
+            *ansi_n_p++ = c;
+            *ansi_n_p = '\0';
+        break;
+        case 2:
+            *ansi_m_p++ = c;
+            *ansi_m_p = '\0';
+        break;
+    }
+}
+
 void gpu_putchar(int c) {
+    if (ansi) {
+        gpu_parse_ansi(c);
+
+        return;
+    }
+
     if (c == '\n') {
         xy &= 0xffff0000;
 
@@ -78,6 +173,12 @@ void gpu_putchar(int c) {
         return;
     } else if (c == '\r') {
         xy &= 0xffff0000;
+
+        return;
+    // ANSI escape sequence
+    } else if (c == '\x1b') {
+        ansi = 1;
+        state = 0;
 
         return;
     }

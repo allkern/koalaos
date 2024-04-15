@@ -98,7 +98,7 @@ int usr_chip8(int argc, const char* argv[]) {
             last_k = -1;
         }
 
-        int ips = 60;
+        int ips = 20;
 
         while (ips--)
             c8_execute_instruction(&c8);
