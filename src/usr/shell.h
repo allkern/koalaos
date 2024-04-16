@@ -25,7 +25,7 @@ static struct sef_desc {
 } sef[MAX_SEF_COUNT];
 
 // CLI
-#define MAX_ARGS 16
+#define MAX_ARGS 32
 #define MAX_ARGLEN 128
 
 static int __argc;
@@ -49,7 +49,5 @@ void shell_exit(void);
 char* shell_get_cwd(void);
 void shell_set_cwd(const char* path);
 void shell_get_absolute_path(char* path, char* buf, size_t size);
-
-static char* HACK_MALLOC_BASE;
 
 #endif

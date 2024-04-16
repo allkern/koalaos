@@ -23,20 +23,7 @@
 
 static int __exit = 0;
 
-void HACK_malloc_argv() {
-    char* base = HACK_MALLOC_BASE;
-
-    for (int i = 0; i < MAX_ARGS; i++) {
-        __argv[i] = base;
-
-        base += MAX_ARGLEN;
-    }
-}
-
-void HACK_argv_fix(int argc) {
-    for (int i = argc; i < MAX_ARGS; i++)
-        __argv[i] = NULL;
-}
+static char __argv_buf[MAX_ARGLEN * MAX_ARGS];
 
 void shell_init(void) {
     cmd = curr;
@@ -68,14 +55,6 @@ void shell_init(void) {
     SEF_ALIAS(dir, "l");
     SEF_ALIAS(dis, "d/i");
     SEF_ALIAS(dump, "d/m");
-
-    // Huge hack, we don't use malloc that much anyways
-    if (!HACK_MALLOC_BASE) {
-        HACK_MALLOC_BASE = malloc(0);
-
-        // Allocate two contiguous blocks
-        (void)malloc(0);
-    }
 }
 
 void shell_register(sef_proto fn, const char* name, const char* desc, int alias) {
@@ -95,6 +74,15 @@ int getchar_block() {
 }
 
 void init_argv(char* buf) {
+    // INitialize argv with pointers to our buffer
+    char* base = __argv_buf;
+
+    for (int i = 0; i < MAX_ARGS; i++) {
+        __argv[i] = base;
+
+        base += MAX_ARGLEN;
+    }
+
     __argc = 0;
 
     char* ptr = buf;
@@ -122,6 +110,10 @@ void init_argv(char* buf) {
             *arg = '\0';
         }
     }
+
+    // Clear unused argv entries
+    for (int i = __argc; i < MAX_ARGS; i++)
+        __argv[i] = NULL;
 }
 
 void shell_exit(void) {
@@ -142,9 +134,7 @@ int shell_exec(const char* buf) {
         //     continue;
  
         if (!strncmp(sef[i].name, buf, len)) {
-            HACK_malloc_argv();
             init_argv(buf);
-            HACK_argv_fix(__argc);
 
             // To-do: Do something with return value
             return sef[i].fn(__argc, (const char**)__argv);
