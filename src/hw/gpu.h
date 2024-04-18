@@ -16,6 +16,7 @@ void gpu_init(const uint32_t* font, int height);
 void gpu_scroll_down(void);
 void gpu_putchar(int c);
 void gpu_set_attribute(uint8_t c);
+uint8_t gpu_get_attribute(void);
 void gpu_restore_attribute(void);
 void gpu_clear(void);
 uint32_t gpu_get_xpos(void);
@@ -24,6 +25,7 @@ uint32_t gpu_get_pos(void);
 void gpu_set_xpos(uint32_t pos);
 void gpu_set_ypos(uint32_t pos);
 void gpu_set_pos(uint32_t pos);
+void gpu_upload_tex(uint16_t* buf, int x, int y, int width, int height);
 
 static uint32_t g_clut[] = {
     0x63180421, 0x00000000,

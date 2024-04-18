@@ -127,11 +127,13 @@ void dmem_init(void) {
         size = __heap_size / (1024 * 1024 * 1024);
     }
 
-    // printf("Heap space available: %d %s (%d bytes)\n", size, unit, __heap_size);
+    char sbuf[128];
+
+    sprintf(sbuf, "Heap space available: %d %s (%d bytes)", size, unit, __heap_size);
+
+    printf("\x1b[97;44m%-80s\x1b[0m\n", sbuf);
 
     __heap_table_size = __heap_size >> 12;
-
-    // printf("dmem_alloc=%08x\n", dmem_alloc(0x2000));
 
     for (int i = 0; i < __heap_table_size; i++)
         __heap_map[i] = 1;

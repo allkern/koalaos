@@ -3,6 +3,14 @@
 #include "util/mmio.h"
 #include "libc/ctype.h"
 #include "libc/stdlib.h"
+#include "hw/uart.h"
+
+static int ansi = 0;
+static char ansi_n[4];
+static char ansi_m[4];
+static char* ansi_n_p = ansi_n;
+static char* ansi_m_p = ansi_m;
+static int state = 0;
 
 int __ffssi2(int a) {
     if (a == 0)
@@ -61,13 +69,6 @@ void gpu_set_pos(uint32_t pos) {
     xy = pos;
 }
 
-static int ansi = 0;
-static char ansi_n[4];
-static char ansi_m[4];
-static char* ansi_n_p = ansi_n;
-static char* ansi_m_p = ansi_m;
-static int state = 0;
-
 void gpu_parse_ansi(char c) {
     if (c == 'm') {
         int n = atoi(ansi_n);
@@ -98,7 +99,7 @@ void gpu_parse_ansi(char c) {
         if (*ansi_m) {
             int m = atoi(ansi_m);
 
-            switch (n) {
+            switch (m) {
                 case 40: at = (at & 0xf) | 0x00; break;
                 case 41: at = (at & 0xf) | 0x10; break;
                 case 42: at = (at & 0xf) | 0x20; break;
@@ -123,6 +124,8 @@ void gpu_parse_ansi(char c) {
 
         state = 0;
         ansi = 0;
+        *ansi_n = '\0';
+        *ansi_m = '\0';
         ansi_n_p = ansi_n;
         ansi_m_p = ansi_m;
     }
@@ -215,6 +218,10 @@ void gpu_set_attribute(uint8_t at) {
     gpu_update_clut(g_clut);
 }
 
+uint8_t gpu_get_attribute(void) {
+    return attr;
+}
+
 void gpu_restore_attribute() {
     attr = prev_attr;
 
@@ -242,6 +249,11 @@ void gpu_init(const uint32_t* font, int height) {
     attr = 0x07;
     prev_attr = attr;
 
+    for (int i = 0; i < 4; i++) {
+        ansi_n[i] = 0;
+        ansi_m[i] = 0;
+    }
+
     // Reset GPU
     mmio_write_32(GPU_GP1, 0x00000000);
 
@@ -268,4 +280,32 @@ void gpu_init(const uint32_t* font, int height) {
 
     // Set up texpage (x=640, y=0, enable drawing)
     mmio_write_32(GPU_GP0, 0xe100040a);
+}
+
+/*
+  1st  Command
+  2nd  Destination Coord (YyyyXxxxh)  ;Xpos counted in halfwords
+  3rd  Width+Height      (YsizXsizh)  ;Xsiz counted in halfwords
+  ...  Data              (...)      <--- usually transferred via DMA
+*/
+void gpu_upload_tex(uint16_t* buf, int x, int y, int width, int height) {
+    mmio_write_32(GPU_GP0, 0xa0000000);
+    mmio_write_32(GPU_GP0, (y << 16) | x);
+    mmio_write_32(GPU_GP0, (height << 16) | width);
+
+    uint32_t size = width * height;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int yk = height - y;
+
+            uint32_t l = buf[(x++) + (yk * width)];
+            uint32_t h = buf[x + (yk * width)];
+
+            l = ((l & 0x7c00) >> 10) | ((l & 0x001f) << 10) | (l & 0x03e0);
+            h = ((h & 0x7c00) >> 10) | ((h & 0x001f) << 10) | (h & 0x03e0);
+
+            mmio_write_32(GPU_GP0, l | (h << 16));
+        }
+    }
 }

@@ -10,7 +10,7 @@ CFLAGS := -g -DLOG_USE_COLOR -Ofast -lSDL2 -lSDL2main -Wno-unused-result
 KERNEL_SOURCES := kernel/kernel.s
 
 KOS_CC := gcc
-KOS_CFLAGS := -static -nostdlib -EL -fno-tree-loop-distribute-patterns -O2
+KOS_CFLAGS := -static -nostdlib -EL -fno-tree-loop-distribute-patterns -O3
 KOS_CFLAGS += -march=r3000 -mtune=r3000 -mfp32 -ffreestanding -nostdinc
 KOS_CFLAGS += -Wl,-T src/script.ld
 KOS_SOURCES := $(wildcard src/*.c)
@@ -18,6 +18,7 @@ KOS_SOURCES += $(wildcard src/libc/*.c)
 KOS_SOURCES += $(wildcard src/sys/*.c)
 KOS_SOURCES += $(wildcard src/usr/*.c)
 KOS_SOURCES += $(wildcard src/hw/*.c)
+KOS_SOURCES += $(wildcard src/util/*.c)
 
 VERSION_TAG := $(shell git describe --always --tags --abbrev=0)
 COMMIT_HASH := $(shell git rev-parse --short HEAD)

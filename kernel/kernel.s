@@ -123,18 +123,18 @@ unhandled_exception:
 
 # To-do: Implement jumptable
 syscall_handler:
-    # # Initialize IRQ handler
-    # la      $t0, SYS_IRQ_HANDLER_PTR
-    # sw      $a0, 0($t0)
+    # Initialize IRQ handler
+    la      $t0, SYS_IRQ_HANDLER_PTR
+    sw      $a0, 0($t0)
 
-    # # Acknowledge pending IRQs
-    # la      $k1, 0x9f801070
-    # sw      $zero, 0($k1)
+    # Acknowledge pending IRQs
+    la      $k1, 0x9f801070
+    sw      $zero, 0($k1)
 
-    # # Enable VBLANK IRQ
-    # li      $k0, 0x1
-    # la      $k1, 0x9f801074
-    # sw      $k0, 0($k1)
+    # Enable VBLANK IRQ
+    li      $k0, 0x1
+    la      $k1, 0x9f801074
+    sw      $k0, 0($k1)
 
     # Can't enable interrupts within exception handler
     # li      $k0, 0xff03
@@ -142,9 +142,6 @@ syscall_handler:
 
     # Restore saved state
     xrestore
-
-    # la      $k0, SYS_HEAP_BASE_PAGE
-    # lw      $a0, 0($k0)
 
     # Jump to EPC (+4 to skip syscall instr)
     mfc0    $k0, $14
@@ -162,7 +159,7 @@ irq_handler:
     sw      $zero, 0($k1)
 
     # Call registered IRQ handler
-    la      $t0, SYS_KMEM_BASE
+    la      $t0, SYS_IRQ_HANDLER_PTR
     lw      $t0, 0($t0)
     beqz    $t0, 0f                 # Skip if no handler is registered
     nop

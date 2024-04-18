@@ -6,13 +6,6 @@
 #define	EXIT_FAILURE 1
 #define	EXIT_SUCCESS 0
 
-#define ALLOC_BLOCK_SIZE 0x1000
-#define ALLOC_BLOCK_SHIFT 12
-
-typedef struct {
-    int free;
-} __alloc_block;
-
 void __libc_init_stdlib();
 
 void* malloc(size_t size);

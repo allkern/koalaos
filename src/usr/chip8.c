@@ -1,3 +1,4 @@
+#include "libc/stdlib.h"
 #include "libc/string.h"
 #include "libc/stdio.h"
 #include "sys/ext2.h"
@@ -33,8 +34,6 @@ uint8_t screen[64 * 32];
 uint8_t mem[0x1000];
 
 int usr_chip8(int argc, const char* argv[]) {
-    char buf[EXT2_SECTOR_SIZE * 2];
-
     struct ext2_inode inode;
 
     if (!argv[1]) {
@@ -55,6 +54,14 @@ int usr_chip8(int argc, const char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    char* buf = malloc(file.inode.s_sizel);
+
+    if (!buf) {
+        puts("Could not allocate memory");
+
+        return 1;
+    }
+
     ext2_fread(&file, buf, file.inode.s_sizel);
     ext2_fclose(&file);
 
@@ -62,6 +69,8 @@ int usr_chip8(int argc, const char* argv[]) {
 
     c8_init(&c8, screen, mem);
     c8_load_program(&c8, buf, file.inode.s_sizel);
+
+    free(buf);
 
     int last_k = -1;
 

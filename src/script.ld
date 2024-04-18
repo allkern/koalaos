@@ -11,7 +11,7 @@ SEARCH_DIR("=/usr/local/lib/mipsel-linux-gnu"); SEARCH_DIR("=/lib/mipsel-linux-g
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x0400000)); . = SEGMENT_START("text-segment", 0x0400000) + SIZEOF_HEADERS;
+  PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x0000000)); . = SEGMENT_START("text-segment", 0x0000000) + SIZEOF_HEADERS;
   .interp         : { *(.interp) }
   .MIPS.abiflags   : { *(.MIPS.abiflags) }
   .reginfo         : { *(.reginfo) }

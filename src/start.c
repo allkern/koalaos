@@ -9,6 +9,7 @@
 #include "usr/dir.h"
 #include "usr/shell.h"
 #include "sys/user.h"
+#include "sys/dmem.h"
 
 #ifdef GPU_FONT8
 #include "font/vga8.h"
@@ -43,10 +44,12 @@ void __start() {
     if (user_init())
         exit(EXIT_FAILURE);
 
-    gpu_clear();
 
-    while (1)
-        main();
+    gpu_clear();
+    
+    dmem_init();
+
+    main();
 
     exit(EXIT_SUCCESS);
 }

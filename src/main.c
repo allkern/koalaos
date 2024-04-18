@@ -1,7 +1,10 @@
 #include "libc/stdio.h"
+#include "libc/string.h"
 
 #include "usr/shell.h"
 #include "sys/user.h"
+#include "hw/gpu.h"
+#include "util/bmp.h"
 
 char* input(char* buf, size_t size, int hidden) {
     char* ptr = buf;
@@ -76,6 +79,34 @@ char* input(char* buf, size_t size, int hidden) {
 }
 
 int main() {
+    gpu_clear();
+
+    struct bmp_s bmp;
+
+    int i = bmp_open(&bmp, "/usr/user/16bpp.bmp");
+
+    dmem_init();
+
+    printf(
+        "open      %u\n"
+        "compress  %u\n"
+        "signature %c%c\n"
+        "filesize  %d\n"
+        "dataoff   %d\n"
+        "width     %u\n"
+        "height    %u\n"
+        "bpp       %u\n",
+        i,
+        bmp.info.i_compression,
+        bmp.hdr.h_signature[0],
+        bmp.hdr.h_signature[1],
+        bmp.hdr.h_file_size,
+        bmp.hdr.h_data_offset,
+        bmp.info.i_width,
+        bmp.info.i_height,
+        bmp.info.i_bpp
+    );
+
     puts("Welcome to KoalaOS!\n\nCopyright (C) 2024 Allkern/Lisandro Alarcon\n");
 
     login:

@@ -1,5 +1,7 @@
 #include "libc/string.h"
 #include "libc/stdio.h"
+#include "libc/time.h"
+#include "sys/syscall.h"
 #include "sys/ext2.h"
 #include "sys/user.h"
 #include "hw/gpu.h"
@@ -24,6 +26,32 @@
 static int __exit = 0;
 
 static char __argv_buf[MAX_ARGLEN * MAX_ARGS];
+
+static int counter = 10;
+static int saved_attr = 0x1;
+
+void shell_update_status_bar(void) {
+    if (counter--)
+        return;
+
+    counter = 10;
+
+    uint32_t pos = gpu_get_pos();
+
+    if (!saved_attr)
+        // uint8_t a = gpu_get_attribute();
+
+        // gpu_set_attribute((a << 4) | (a >> 4));
+        gpu_set_attribute(0);
+
+    putchar('_');
+
+    saved_attr ^= 0x1;
+
+    gpu_restore_attribute();
+
+    gpu_set_pos(pos);
+}
 
 void shell_init(void) {
     cmd = curr;
@@ -55,6 +83,17 @@ void shell_init(void) {
     SEF_ALIAS(dir, "l");
     SEF_ALIAS(dis, "d/i");
     SEF_ALIAS(dump, "d/m");
+
+    // Register status bar updater as VBLANK callback
+    syscall(shell_update_status_bar);
+
+    // Enable interrupts
+    asm volatile (
+        ".set noat\n"
+        "la      $at, 0x40ff03\n"
+        "mtc0    $at, $12\n"
+        ".set at\n"
+    );
 }
 
 void shell_register(sef_proto fn, const char* name, const char* desc, int alias) {
@@ -158,6 +197,16 @@ void shell_start() {
 
         char c = getchar_block();
 
+        // Disable interrupts
+        asm volatile (
+            ".set noat\n"
+            "la      $at, 0x400000\n"
+            "mtc0    $at, $12\n"
+            ".set at\n"
+        );
+
+        syscall(0);
+
         switch (c) {
             // Up arrow
             case 0x11: {
@@ -240,7 +289,27 @@ void shell_start() {
                 *ptr = '\0';
             } break;
         }
+
+        syscall(shell_update_status_bar);
+
+        // Enable interrupts
+        asm volatile (
+            ".set noat\n"
+            "la      $at, 0x40ff03\n"
+            "mtc0    $at, $12\n"
+            ".set at\n"
+        );
     }
+
+    // Disable interrupts
+    asm volatile (
+        ".set noat\n"
+        "la      $at, 0x400000\n"
+        "mtc0    $at, $12\n"
+        ".set at\n"
+    );
+
+    syscall(0);
 
     printf("exit\n");
 }

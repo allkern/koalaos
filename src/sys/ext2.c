@@ -235,12 +235,20 @@ uint32_t ext2_off_2_lba(struct ext2_inode* inode, uint32_t offset) {
         return inode->s_direct[index];
 
     // Singly indirect
-    } else if (index >= 12 && index <= 268) {
+    } else if (index >= 12 && index < 268) {
         impl_read_sector(state.buf, inode->s_indirect_s);
         
         index -= 12;
 
         return ((uint32_t*)state.buf)[index];
+    } else if (index >= 268 && index < 65804) {
+        impl_read_sector(state.buf, inode->s_indirect_d);
+
+        index -= 268;
+
+        impl_read_sector(state.buf, ((uint32_t*)state.buf)[index >> 8]);
+        
+        return ((uint32_t*)state.buf)[index & 0xff];
     }
 
     // To-do: Support doubly and triply indirect

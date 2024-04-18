@@ -5,39 +5,40 @@
 #include "shell.h"
 
 int usr_cat(int argc, const char* argv[]) {
-    char buf[EXT2_SECTOR_SIZE];
-
-    struct ext2_inode inode;
-
     if (!argv[1]) {
         printf("No input supplied\n");
 
         return EXIT_FAILURE;
     }
 
-    char path[256];
+    char path[MAX_PATH];
 
-    shell_get_absolute_path(argv[1], path, 256);
+    shell_get_absolute_path(argv[1], path, MAX_PATH);
 
-    if (ext2_search(&inode, path)) {
+    struct ext2_fd file;
+
+    if (ext2_fopen(&file, path, "rb")) {
         printf("Couldn't find path \'%s\'\n", path);
 
         return EXIT_FAILURE;
     }
 
-    if ((inode.s_tp & 0xf000) != INODE_FILE) {
-        printf("Path \'%s\' is not a file\n", path);
+    char* buf = malloc(file.inode.s_sizel + 1);
 
-        return EXIT_FAILURE;
+    if (!buf) {
+        puts("Could not allocate memory");
+
+        return 1;
     }
 
-    struct ext2_fd file;
+    memset(buf, 0, file.inode.s_sizel + 1);
 
-    ext2_fopen(&file, path, "rb");
     ext2_fread(&file, buf, file.inode.s_sizel);
     ext2_fclose(&file);
 
     printf("%s\n", buf);
+
+    free(buf);
 
     return EXIT_SUCCESS;
 }
